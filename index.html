@@ -6,7 +6,7 @@ h1{margin:12px 0 4px}#info{margin-bottom:10px;opacity:.85}
 #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:900px;margin:0 auto;padding:10px}
 .card{background:#fff;border-radius:10px;cursor:pointer;border:4px solid transparent;transition:transform .15s}
 @media(hover:hover){.card:hover{transform:scale(1.03)}}.card.sel{border-color:#ffcc00}.card.bad{border-color:#ff4040;animation:shake .3s}
-.card{touch-action:pan-y;user-select:none}.card.gone{visibility:hidden}.card svg{pointer-events:none;width:100%;display:block;border-radius:6px}
+.card{touch-action:manipulation;user-select:none}.card.gone{visibility:hidden}.card svg{pointer-events:none;width:100%;display:block;border-radius:6px}
 @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 #fx{position:fixed;inset:0;pointer-events:none;display:none}
 #msg{position:fixed;top:40%;width:100%;font-size:72px;font-weight:900;color:#fff;text-shadow:0 0 20px #f0f,0 0 40px #0ff;display:none}
@@ -58,16 +58,12 @@ function newLevel(){sel=[];lock=false;misses=0;const b=base();
  info()}
 function hearts(){document.getElementById('hearts').textContent='❤️'.repeat(lives)+'🤍'.repeat(10-lives)}
 function retry(){lives=10;level=1;score=0;document.getElementById('over').style.display='none';newLevel()}
-function swipe(d){let x0=null,y0=0,dx=0;
- d.onpointerdown=e=>{if(lock)return;x0=e.clientX;y0=e.clientY;dx=0;d.setPointerCapture(e.pointerId);d.style.transition='none'};
- d.onpointermove=e=>{if(x0===null)return;dx=e.clientX-x0;if(Math.abs(dx)>8){d.style.transform=`translateX(${dx}px) rotate(${dx/15}deg)`;d.style.opacity=1-Math.min(.7,Math.abs(dx)/300)}};
- d.onpointerup=d.onpointercancel=e=>{if(x0===null)return;x0=null;d.style.transition='transform .25s,opacity .25s';
-  if(Math.abs(dx)<10&&e.type=='pointerup'){d.style.transform='';d.style.opacity='';click(d);return}
-  if(Math.abs(dx)>80&&!d.classList.contains('sel')){
-   if(d.dataset.t=='1'){d.style.transform='';d.style.opacity='';d.classList.add('bad');misses++;lives--;hearts();setTimeout(()=>d.classList.remove('bad'),700);
-    if(lives<=0){lock=true;document.getElementById('final').textContent=score;setTimeout(()=>document.getElementById('over').style.display='flex',600)}return}
-   d.style.transform=`translateX(${dx>0?600:-600}px) rotate(${dx>0?30:-30}deg)`;d.style.opacity=0;setTimeout(()=>d.classList.add('gone'),250)}
-  else{d.style.transform='';d.style.opacity=''}}}
+function swipe(d){let t=null;
+ d.onclick=()=>{if(lock)return;if(t){clearTimeout(t);t=null;elim(d)}else t=setTimeout(()=>{t=null;click(d)},280)}}
+function elim(d){if(d.classList.contains('sel'))return;
+ if(d.dataset.t=='1'){d.classList.add('bad');misses++;lives--;hearts();setTimeout(()=>d.classList.remove('bad'),700);
+  if(lives<=0){lock=true;document.getElementById('final').textContent=score;setTimeout(()=>document.getElementById('over').style.display='flex',600)}return}
+ d.style.transition='transform .25s,opacity .25s';d.style.transform='scale(.2)';d.style.opacity=0;setTimeout(()=>d.classList.add('gone'),250)}
 function info(){hearts();document.getElementById('info').innerHTML=`Level ${level} &nbsp;•&nbsp; Score ${score} &nbsp;•&nbsp; Find the two identical pictures`}
 function click(d){if(lock||d.classList.contains('sel'))return;d.classList.add('sel');sel.push(d);
  if(sel.length==2){lock=true;if(sel[0].dataset.t=='1'&&sel[1].dataset.t=='1'){score+=Math.max(10,100-misses*25)*level;info();fireworks()}
